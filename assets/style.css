@@ -6,5 +6,84 @@ div.stSelectbox {
     width: 100%;
 }
 
+/* Contoh CSS untuk mengubah tampilan font */
+.pie-chart-text {
+    font-family: 'Arial', sans-serif;  /* Mengubah jenis font */
+    font-size: 16px;  /* Mengubah ukuran font */
+    font-weight: bold;  /* Membuat font tebal */
+    color: #FF5733;  /* Mengubah warna font */
+}
+
+/* Menambahkan style untuk tabel jika diperlukan */
+.stTable th {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Style untuk seluruh aplikasi */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+}
+
+/* Header judul aplikasi */
+h1 {
+    color: #4B8B3B;
+    font-weight: bold;
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Style untuk setiap chart agar lebih rapi */
+.plotly-graph-div {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Mengubah background color dan text color untuk kolom dan tabel */
+.stTable th, .stTable td {
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.stTable th {
+    background-color: #2ca02c;
+    color: white;
+}
+
+.stTable td {
+    background-color: #f1f1f1;
+}
+
+/* Menambahkan style khusus untuk tabel header */
+.stTable .row_heading {
+    font-weight: bold;
+    background-color: #f1f1f1;
+}
+
+/* Menambahkan style pada container chart untuk lebih fleksibel */
+.stPlotlyChart {
+    margin-top: 30px;
+}
+
+/* Khusus untuk Pie Chart */
+.plotly-pie-chart .text {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Tambahkan border atau shadow untuk memberikan efek */
+.stButton button {
+    background-color: #ff7f0e;
+    color: white;
+    border-radius: 5px;
+    padding: 10px;
+}
+.stButton button:hover {
+    background-color: #d65300;
+}
+
 
 /* Anda dapat menambahkan aturan CSS lainnya di sini */

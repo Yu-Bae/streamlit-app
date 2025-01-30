@@ -7,8 +7,7 @@ import os
 with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-
-st.title('Aplikasi Streamlit dengan Dataset Excel dan Plotly')
+st.title('Dashboard Sales Overview AQUA Division MTD Dec 2024')
 
 # Pastikan nama file sesuai dataset lokal Anda
 file_name = "Dec 2024.xlsx"
@@ -115,6 +114,13 @@ try:
         template="plotly_white"
     )
 
+    # Menyesuaikan ukuran font dan warna teks pada Pie Chart agar Bold
+    fig_week.update_traces(
+        textfont=dict(size=15, color="black", family="Arial, sans-serif", weight="bold"),  # Menambahkan bold
+        textinfo="percent+label",  # Menampilkan persentase dan label
+        marker=dict(colors=['#FF7F0E', '#1F77B4', '#2CA02C', '#D62728', '#9467BD'])  # Warna sektornya
+    )
+
     # ================== Membagi Kolom untuk Tabel dan Pie Chart ==================
     col1, col2 = st.columns([2, 1])  # Kolom pertama lebih lebar (2) untuk tabel, kolom kedua (1) untuk pie chart
 
@@ -131,3 +137,5 @@ except FileNotFoundError:
     st.error(f"File '{file_name}' tidak ditemukan.")
 except ValueError as e:
     st.error(f"Error saat membaca data: {e}")
+except Exception as e:
+    st.error(f"Terjadi kesalahan: {e}")
