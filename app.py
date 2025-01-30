@@ -39,17 +39,26 @@ try:
 
     st.plotly_chart(fig_depo, use_container_width=True)
 
-    # ================== Chart 2: By Channel ==================
+    # ================== Chart 2: By Channel (Bar Chart) ==================
     filtered_data_channel = df.groupby("CHANNEL")[filter_column].sum().reset_index()
     filtered_data_channel[filter_column] = filtered_data_channel[filter_column].astype(int)
 
-    fig_channel = px.pie(
+    fig_channel = px.bar(
         filtered_data_channel,
-        names="CHANNEL",
-        values=filter_column,
+        x="CHANNEL",
+        y=filter_column,
         title=f"{filter_column} by Channel",
-        hole=0.3
+        text_auto=True,
+        color=filter_column,
+        labels={"CHANNEL": "Channel", filter_column: f"Total {filter_column}"},
+        template="plotly_white"
     )
+
+    # Menonaktifkan pemformatan otomatis dan menambahkan format ribuan
+    fig_channel.update_layout(
+        yaxis_tickformat=",.0f"  # Menambahkan koma sebagai pemisah ribuan
+    )
+
     st.plotly_chart(fig_channel, use_container_width=True)
 
     # ================== Chart 3: By SKU Report ==================
