@@ -4,8 +4,9 @@ import plotly.express as px
 import os
 
 # Memuat file CSS eksternal
-with open("D:/BelajarPython-Atom/style.css") as f:
+with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 
 st.title('Aplikasi Streamlit dengan Dataset Excel dan Plotly')
 
