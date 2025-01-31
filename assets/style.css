@@ -1,12 +1,11 @@
-/* style.css */
-
 /* Mengubah lebar dropdown Streamlit */
 div.stSelectbox {
     max-width: 250px;  /* Sesuaikan lebar dropdown sesuai kebutuhan */
     width: 100%;
 }
 
-/* Contoh CSS untuk mengubah tampilan font */
+
+/* Contoh CSS untuk mengubah tampilan font pada Pie Chart */
 .pie-chart-text {
     font-family: 'Arial', sans-serif;  /* Mengubah jenis font */
     font-size: 16px;  /* Mengubah ukuran font */
@@ -48,8 +47,9 @@ h1 {
     font-size: 14px;
 }
 
-.stTable th {
+ thead th {
     background-color: #2ca02c;
+    text-align: center !important;
     color: white;
 }
 
@@ -85,5 +85,28 @@ h1 {
     background-color: #d65300;
 }
 
+.center-text {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
 
-/* Anda dapat menambahkan aturan CSS lainnya di sini */
+.st.dataframe {
+  text-align: center;
+}
+
+/* Styling untuk layout tabel di samping */
+.stColumn {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+
+/* CSS untuk meratakan teks di tengah */
+.custom-table th,
+.custom-table td {
+    text-align: center !important;  /* Meratakan teks di tengah */
+}
