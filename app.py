@@ -48,20 +48,22 @@ try:
     ao_customer = int(round(id_customer, 0))
     total_sales = int(df["TOTAL LITER"].sum())
     # Sum liter per tanggal dulu, kemudian ambil rata-ratanya
-    # Jumlahkan liter per tanggal terlebih dahulu
     total_liter_per_day = df.groupby('TANGGAL')['TOTAL LITER'].sum().reset_index()
     # Ambil rata-rata dari total liter per tanggal
     average_sales_by_liter = round(total_liter_per_day['TOTAL LITER'].mean(), 2)
     # Menggunakan format string untuk menambahkan koma sebagai pemisah ribuan
-    formatted_average_sales_by_liter = f"{average_sales_by_liter:,.2f}"
+    formatted_average_sales_by_liter = f"{average_sales_by_liter:,.0f}"
+
+    # Total Target Liter dari target_branch
+    total_target_liter = target_branch["TARGET DEPO LITER"].sum()
 
     # Kolom untuk meratakan angka
     left_column, middle_column, right_column = st.columns(3)
 
-    # Menampilkan total LITER, Average Sales per Day, dan Total Active Outlet
+    # Menampilkan Total Liter dan Target Liter
     with left_column:
-        st.markdown("<div class='center-text' style='color: #1C79F2'>Total Liter</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='center-text'>{total_sales:,}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #1C79F2'>Total Liter / Target Liter</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='center-text'>{total_sales:,.0f} / <span style='color: orange;'>{total_target_liter:,.0f}</span></div>", unsafe_allow_html=True)
     with middle_column:
         st.markdown("<div class='center-text' style='color: #1C79F2'>Average Sales per Day (Liter)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{formatted_average_sales_by_liter}</div>", unsafe_allow_html=True)
@@ -141,15 +143,15 @@ try:
     if filter_column == "by Quantity":
         target_col = "TARGET DEPO QTY"
         y_columns = [filter_column_name, target_col]
-        title_chart = "Perbandingan Penjualan per Branch (Quantity)"
+        title_chart = "Sales by Branch (Quantity)"
     elif filter_column == "by Liter":
         target_col = "TARGET DEPO LITER"
         y_columns = [filter_column_name, target_col]
-        title_chart = "Perbandingan Penjualan per Branch (Liter)"
+        title_chart = "Sales by Branch (Liter)"
     else:
         y_columns = [filter_column_name]
         target_col = None
-        title_chart = "Perbandingan Penjualan per Branch"
+        title_chart = "Sales by Branch"
 
     fig_depo_comparison = px.bar(
         df_target_branch,
@@ -187,15 +189,15 @@ try:
     if filter_column == "by Quantity":
         target_col = "TARGET CH QTY"
         y_columns = [filter_column_name, target_col]
-        title_chart = "Perbandingan Penjualan per Channel (Quantity)"
+        title_chart = "Sales by Channel (Quantity)"
     elif filter_column == "by Liter":
         target_col = "TARGET CH LITER"
         y_columns = [filter_column_name, target_col]
-        title_chart = "Perbandingan Penjualan per Channel (Liter)"
+        title_chart = "Sales by Channel (Liter)"
     else:
         y_columns = [filter_column_name]
         target_col = None
-        title_chart = "Perbandingan Penjualan per Channel"
+        title_chart = "Sales by Channel"
 
     # Membuat chart dengan kondisi yang ditentukan
     fig_channel_comparison = px.bar(
@@ -233,15 +235,15 @@ try:
     if filter_column == "by Quantity":
         target_col = "TARGET SKU QTY"
         y_columns = [filter_column_name, target_col]
-        title_chart = "Perbandingan Penjualan per SKU (Quantity)"
+        title_chart = "Sales by SKU (Quantity)"
     elif filter_column == "by Liter":
         target_col = "TARGET SKU LITER"
         y_columns = [filter_column_name, target_col]
-        title_chart = "Perbandingan Penjualan per SKU (Liter)"
+        title_chart = "Sales by SKU (Liter)"
     else:
         y_columns = [filter_column_name]
         target_col = None
-        title_chart = "Perbandingan Penjualan per SKU"
+        title_chart = "Sales by SKU"
 
     fig_sku_comparison = px.bar(
         df_target_sku,
