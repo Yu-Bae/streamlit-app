@@ -3,17 +3,33 @@ import pandas as pd
 import plotly.express as px
 import os
 
+# 📂 Membaca file Excel
+file_name = "mst_sales.xlsx"
+df = pd.read_excel(file_name, parse_dates=["TANGGAL"])  # Pastikan kolom TANGGAL terbaca sebagai datetime
+
+# 🗓️ Ekstrak MONTH dan YEAR dari kolom TANGGAL
+latest_date = df["TANGGAL"].max()  # Ambil tanggal terbaru dalam dataset
+month_year = latest_date.strftime("%b %Y")  # Format menjadi "Dec 2024"
+
+# 🏷️ Set Title dengan nilai dari data
+st.set_page_config(page_title=f"Sales Trend - AQUA {month_year}", page_icon=":bar_chart:", layout="wide")
+
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
-st.set_page_config(page_title="Sales Trend - AQUA Dec 2024", page_icon=":bar_chart:", layout="wide")
+# st.set_page_config(page_title="Sales Trend - AQUA Dec 2024", page_icon=":bar_chart:", layout="wide")
 
 # Memuat file CSS eksternal
 with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-st.title('Sales Trend - AQUA Division Dec 2024')
+# 🏷️ Gunakan month_year dalam st.title
+st.markdown(f"""
+    <h1 style="color: #010169; text-align: center;">
+        Sales Trend - AQUA Division {month_year}
+    </h1>
+    """, unsafe_allow_html=True)
 
 # Pastikan nama file sesuai dataset lokal Anda
-file_name = "mst_sales.xlsx"
+# file_name = "mst_sales.xlsx"
 
 try:
     # Membaca file Excel dengan memastikan kolom ID tetap sebagai string
@@ -29,35 +45,41 @@ try:
     id_customer = df["ID PELANGGAN"].nunique()
     ao_customer = int(round(id_customer, 0))
     total_sales = int(df["TOTAL LITER"].sum())
-    average_sales_by_liter = round(df["TOTAL LITER"].mean(), 2)
+    # Sum liter per tanggal dulu, kemudian ambil rata-ratanya
+    # Jumlahkan liter per tanggal terlebih dahulu
+    total_liter_per_day = df.groupby('TANGGAL')['TOTAL LITER'].sum().reset_index()
+    # Ambil rata-rata dari total liter per tanggal
+    average_sales_by_liter = round(total_liter_per_day['TOTAL LITER'].mean(), 2)
 
     # Kolom untuk meratakan angka
     left_column, middle_column, right_column = st.columns(3)
 
     # Menampilkan total LITER, Average Sales per Day, dan Total Active Outlet
     with left_column:
-        st.markdown("<div class='center-text'>Total LITER:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #1C79F2'>Total Liter</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{total_sales:,}</div>", unsafe_allow_html=True)
     with middle_column:
-        st.markdown("<div class='center-text'>Average Sales per Day:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #1C79F2'>Average Sales per Day (Liter)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{average_sales_by_liter}</div>", unsafe_allow_html=True)
     with right_column:
-        st.markdown("<div class='center-text'>Total Active Outlet:</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #1C79F2'>Total Active Outlet</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{ao_customer:,}</div>", unsafe_allow_html=True)
 
     st.markdown("""---""")
 
+    # Menambahkan styling pada teks "Filter Total"
+    st.markdown('<div style="font-size:15px; font-weight:bold; color:#A31B17;">Filter Total:</div>', unsafe_allow_html=True)
+
     # Dropdown untuk memilih kolom filter yang digunakan pada semua chart
     filter_column = st.selectbox(
-        "Filter Total: ",
-        ["in Sales", "in Quantity", "in Liter"]
+        "",
+        ["by Amount", "by Quantity", "by Liter"]
     )
-
     # Menerjemahkan pilihan dropdown ke nama kolom yang sesuai
     column_map = {
-        "in Sales": "AMOUNT REAL",
-        "in Quantity": "QTY REAL",
-        "in Liter": "TOTAL LITER"
+        "by Amount": "AMOUNT REAL",
+        "by Quantity": "QTY REAL",
+        "by Liter": "TOTAL LITER"
     }
     filter_column_name = column_map[filter_column]
 
@@ -91,11 +113,11 @@ try:
     col1, col2 = st.columns(2)  # Membagi layar menjadi dua kolom
 
     with col1:
-        st.markdown(f"<h3 style='text-align: center;'>Sales per Day by DEPO - Filter: {filter_column}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; color: #1C79F2'>SPD by Branch {filter_column}</h3>", unsafe_allow_html=True)
         st.dataframe(sales_per_day_depo_pivot, use_container_width=True)
 
     with col2:
-        st.markdown(f"<h3 style='text-align: center;'>Sales per Day by SKU - Filter: {filter_column}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; color: #1C79F2'>SPD by SKU {filter_column}</h3>", unsafe_allow_html=True)
         st.dataframe(sales_per_day_sku_pivot, use_container_width=True)
 
     st.markdown("""---""")
@@ -116,7 +138,8 @@ try:
     )
 
     fig_depo.update_layout(
-        yaxis_tickformat=",.0f"  # Menambahkan koma sebagai pemisah ribuan
+        yaxis_tickformat=",.0f",  # Menambahkan koma sebagai pemisah ribuan
+        title_font=dict(color="#1C79F2")  # Mengubah warna font title
     )
 
     # Menonaktifkan legenda
@@ -140,7 +163,8 @@ try:
     )
 
     fig_channel.update_layout(
-        yaxis_tickformat=",.0f"  # Menambahkan koma sebagai pemisah ribuan
+        yaxis_tickformat=",.0f",  # Menambahkan koma sebagai pemisah ribuan
+        title_font=dict(color="#1C79F2")  # Mengubah warna font title
     )
 
     # Menonaktifkan legenda
@@ -163,7 +187,8 @@ try:
     )
 
     fig_sku.update_layout(
-        yaxis_tickformat=",.0f"  # Menambahkan koma sebagai pemisah ribuan
+        yaxis_tickformat=",.0f",  # Menambahkan koma sebagai pemisah ribuan
+        title_font=dict(color="#1C79F2")  # Mengubah warna font title
     )
 
     fig_sku.update_traces(textposition="outside")
@@ -173,14 +198,19 @@ try:
 
     st.plotly_chart(fig_sku, use_container_width=True)
 
-    # ================== Tabel Top 25 NAMA PELANGGAN ==================
-    customer_sales = df.groupby(["NAMA DEPO", "ID PELANGGAN", "NAMA PELANGGAN","TOTAL LITER","QTY REAL"])[["AMOUNT REAL"]].sum().reset_index()
-    top_10_customers = customer_sales.sort_values(by="AMOUNT REAL", ascending=False).head(25)
-    top_10_customers['Ranking'] = top_10_customers.reset_index().index + 1
+    st.markdown("""---""")
 
-    # Mengubah 'AMOUNT REAL' menjadi format angka dengan koma
-    top_10_customers['AMOUNT REAL'] = pd.to_numeric(top_10_customers['AMOUNT REAL'], errors='coerce')
-    top_10_customers['AMOUNT REAL'] = top_10_customers['AMOUNT REAL'].apply(lambda x: f"{x:,.0f}" if pd.notna(x) else '0')
+    # ================== Tabel Top 10 NAMA PELANGGAN ==================
+    # Mengelompokkan data untuk mendapatkan total AMOUNT REAL, TOTAL LITER, dan QTY REAL per pelanggan
+    customer_sales = df.groupby(["NAMA DEPO", "ID PELANGGAN", "NAMA PELANGGAN"])[["AMOUNT REAL", "TOTAL LITER", "QTY REAL"]].sum().reset_index()
+    # Mengurutkan berdasarkan AMOUNT REAL dan mengambil top 25
+    top_10_customers = customer_sales.sort_values(by="AMOUNT REAL", ascending=False).head(25)
+    # Menambahkan kolom NO (Ranking)
+    top_10_customers['NO'] = top_10_customers.reset_index().index + 1
+    # Mengonversi AMOUNT REAL menjadi integer
+    top_10_customers['AMOUNT REAL'] = top_10_customers['AMOUNT REAL'].astype(int)
+    # Menambahkan koma sebagai pemisah ribuan untuk AMOUNT REAL
+    top_10_customers['AMOUNT REAL'] = top_10_customers['AMOUNT REAL'].apply(lambda x: f"{x:,}")
 
     # ================== Pie Chart Week by QTY REAL ==================
     filtered_data_week = df.groupby("WEEK")["QTY REAL"].sum().reset_index()
@@ -190,7 +220,6 @@ try:
         filtered_data_week,
         names="WEEK",
         values="QTY REAL",
-        title="Sales by Week",
         template="plotly_white"
     )
 
@@ -198,28 +227,36 @@ try:
     fig_week.update_traces(
         textfont=dict(size=13, color="black", family="Arial, sans-serif", weight="bold"),
         textinfo="percent+label",
-        marker=dict(colors=['#FF7F0E', '#1F77B4', '#2CA02C', '#D62728', '#9467BD']),
+        marker=dict(colors=['#A4DDED', '#6B9AC4', '#F1C40F', '#2ECC71', '#E74C3C']),
         showlegend=False  # Menonaktifkan legenda
     )
 
     # Mengatur ukuran Pie Chart dengan menambahkan 'height' dan 'autosize'
     fig_week.update_layout(
-        height=600,  # Mengatur tinggi Pie Chart
+        height=400,  # Mengatur tinggi Pie Chart
         width=800,   # Mengatur lebar Pie Chart
-        autosize=True  # Agar menyesuaikan dengan lebar container
+        autosize=True,  # Agar menyesuaikan dengan lebar container
+        margin=dict(t=7)  # Mengurangi margin atas agar lebih dekat dengan judul
     )
 
     # ================== Membagi Kolom untuk Tabel dan Pie Chart ==================
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        # Menampilkan tabel Top 25 Customer dengan Ranking rata tengah
-        st.write("### Top 25 Customer")
-        st.write(
-            top_10_customers[['Ranking', 'NAMA DEPO','ID PELANGGAN', 'NAMA PELANGGAN', 'AMOUNT REAL','TOTAL LITER','QTY REAL']].set_index('Ranking')
-        )
+        # Menampilkan label dengan penyesuaian jarak
+        st.markdown('<h3 style="color:#1C79F2; margin-bottom: 0;">Top 25 Customer</h3>', unsafe_allow_html=True)
+        # ✅ Menampilkan tabel dengan Ranking sebagai index
+        renamed_df = top_10_customers.rename(columns={
+            'AMOUNT REAL': 'AMOUNT',
+            'TOTAL LITER': 'LITER',
+            'QTY REAL': 'QUANTITY'
+        })
+
+        st.write(renamed_df[['NO', 'NAMA DEPO', 'NAMA PELANGGAN', 'AMOUNT', 'LITER', 'QUANTITY']].set_index('NO'))
 
     with col2:
+        # Menampilkan label dengan penyesuaian jarak
+        st.markdown('<h3 style="color:#1C79F2; margin-bottom: 0;">Sales by Week</h3>', unsafe_allow_html=True)
         # Menampilkan Pie Chart
         st.plotly_chart(fig_week, use_container_width=True)
 

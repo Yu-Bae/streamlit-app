@@ -21,8 +21,9 @@ div.stSelectbox {
 
 /* Style untuk seluruh aplikasi */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f4f9;
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+      background-color: #CCCED0 !important;
+      font-family: 'Roboto', sans-serif;
 }
 
 /* Header judul aplikasi */
