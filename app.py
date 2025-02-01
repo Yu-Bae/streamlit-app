@@ -7,15 +7,17 @@ import os
 file_name = "mst_sales.xlsx"
 df = pd.read_excel(file_name, parse_dates=["TANGGAL"])  # Pastikan kolom TANGGAL terbaca sebagai datetime
 
+# 📂 Membaca dataset target (misal target_channel.xlsx)
+target_channel  = pd.read_excel("target_channel.xlsx")
+target_branch   = pd.read_excel("target_branch.xlsx")
+target_sku      = pd.read_excel("target_sku.xlsx")
+
 # 🗓️ Ekstrak MONTH dan YEAR dari kolom TANGGAL
 latest_date = df["TANGGAL"].max()  # Ambil tanggal terbaru dalam dataset
 month_year = latest_date.strftime("%b %Y")  # Format menjadi "Dec 2024"
 
 # 🏷️ Set Title dengan nilai dari data
 st.set_page_config(page_title=f"Sales Trend - AQUA {month_year}", page_icon=":bar_chart:", layout="wide")
-
-# emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
-# st.set_page_config(page_title="Sales Trend - AQUA Dec 2024", page_icon=":bar_chart:", layout="wide")
 
 # Memuat file CSS eksternal
 with open("assets/style.css") as f:
@@ -50,6 +52,8 @@ try:
     total_liter_per_day = df.groupby('TANGGAL')['TOTAL LITER'].sum().reset_index()
     # Ambil rata-rata dari total liter per tanggal
     average_sales_by_liter = round(total_liter_per_day['TOTAL LITER'].mean(), 2)
+    # Menggunakan format string untuk menambahkan koma sebagai pemisah ribuan
+    formatted_average_sales_by_liter = f"{average_sales_by_liter:,.2f}"
 
     # Kolom untuk meratakan angka
     left_column, middle_column, right_column = st.columns(3)
@@ -60,7 +64,7 @@ try:
         st.markdown(f"<div class='center-text'>{total_sales:,}</div>", unsafe_allow_html=True)
     with middle_column:
         st.markdown("<div class='center-text' style='color: #1C79F2'>Average Sales per Day (Liter)</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='center-text'>{average_sales_by_liter}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='center-text'>{formatted_average_sales_by_liter}</div>", unsafe_allow_html=True)
     with right_column:
         st.markdown("<div class='center-text' style='color: #1C79F2'>Total Active Outlet</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{ao_customer:,}</div>", unsafe_allow_html=True)
@@ -114,91 +118,153 @@ try:
 
     with col1:
         st.markdown(f"<h3 style='text-align: center; color: #1C79F2'>SPD by Branch {filter_column}</h3>", unsafe_allow_html=True)
+        sales_per_day_depo_pivot = sales_per_day_depo_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
         st.dataframe(sales_per_day_depo_pivot, use_container_width=True)
 
     with col2:
         st.markdown(f"<h3 style='text-align: center; color: #1C79F2'>SPD by SKU {filter_column}</h3>", unsafe_allow_html=True)
+        sales_per_day_sku_pivot = sales_per_day_sku_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
         st.dataframe(sales_per_day_sku_pivot, use_container_width=True)
 
     st.markdown("""---""")
 
-    # ================== Chart 1: By Depo ==================
-    filtered_data_depo = df.groupby("NAMA DEPO")[filter_column_name].sum().reset_index()
-    filtered_data_depo[filter_column_name] = filtered_data_depo[filter_column_name].astype(int)
+        # ================== Chart 1: By Depo ==================
+    df_target_branch = pd.merge(
+        df.groupby("NAMA DEPO")[filter_column_name].sum().reset_index(),
+        target_branch,
+        on="NAMA DEPO",
+        how="left"
+    )
 
-    fig_depo = px.bar(
-        filtered_data_depo,
+
+        # Kondisi untuk memilih kolom target sesuai filter
+    if filter_column == "by Quantity":
+        target_col = "TARGET DEPO QTY"
+        y_columns = [filter_column_name, target_col]
+        title_chart = "Perbandingan Penjualan per Branch (Quantity)"
+    elif filter_column == "by Liter":
+        target_col = "TARGET DEPO LITER"
+        y_columns = [filter_column_name, target_col]
+        title_chart = "Perbandingan Penjualan per Branch (Liter)"
+    else:
+        y_columns = [filter_column_name]
+        target_col = None
+        title_chart = "Perbandingan Penjualan per Branch"
+
+    fig_depo_comparison = px.bar(
+        df_target_branch,
         x="NAMA DEPO",
-        y=filter_column_name,
-        title="Sales by Branch",
+        y=y_columns,
+        barmode="group",
+        title=title_chart,
         text_auto=True,
-        color=filter_column_name,
-        labels={"NAMA DEPO": "Nama Depo", filter_column_name: f"Total {filter_column_name}"},
+        labels={
+            "NAMA DEPO": "Branch",
+            filter_column_name: f"Total {filter_column_name}",
+            target_col: target_col if target_col else ""
+        },
         template="plotly_white"
     )
 
-    fig_depo.update_layout(
-        yaxis_tickformat=",.0f",  # Menambahkan koma sebagai pemisah ribuan
-        title_font=dict(color="#1C79F2")  # Mengubah warna font title
+    fig_depo_comparison.update_layout(
+        yaxis_title=None,
+        yaxis_tickformat=",.0f",
+        title_font=dict(size=20, color="#1C79F2"),  # Ukuran font diperbesar
     )
 
-    # Menonaktifkan legenda
-    showlegend=False  # Menonaktifkan legenda
-
-    st.plotly_chart(fig_depo, use_container_width=True)
+    st.plotly_chart(fig_depo_comparison, use_container_width=True)
 
     # ================== Chart 2: By Channel (Bar Chart) ==================
-    filtered_data_channel = df.groupby("CHANNEL")[filter_column_name].sum().reset_index()
-    filtered_data_channel[filter_column_name] = filtered_data_channel[filter_column_name].astype(int)
+    # Menggabungkan data penjualan dengan target berdasarkan kolom CHANNEL
+    df_target_channel = pd.merge(
+        df.groupby("CHANNEL")[filter_column_name].sum().reset_index(),
+        target_channel,
+        on="CHANNEL",
+        how="left"
+    )
 
-    fig_channel = px.bar(
-        filtered_data_channel,
+    # Kondisi untuk memilih kolom target sesuai filter
+    if filter_column == "by Quantity":
+        target_col = "TARGET CH QTY"
+        y_columns = [filter_column_name, target_col]
+        title_chart = "Perbandingan Penjualan per Channel (Quantity)"
+    elif filter_column == "by Liter":
+        target_col = "TARGET CH LITER"
+        y_columns = [filter_column_name, target_col]
+        title_chart = "Perbandingan Penjualan per Channel (Liter)"
+    else:
+        y_columns = [filter_column_name]
+        target_col = None
+        title_chart = "Perbandingan Penjualan per Channel"
+
+    # Membuat chart dengan kondisi yang ditentukan
+    fig_channel_comparison = px.bar(
+        df_target_channel,
         x="CHANNEL",
-        y=filter_column_name,
-        title="Sales by Channel",
+        y=y_columns,
+        barmode="group",
+        title=title_chart,
         text_auto=True,
-        color=filter_column_name,
-        labels={"CHANNEL": "Channel", filter_column_name: f"Total {filter_column_name}"},
+        labels={
+            "CHANNEL": "Channel",
+            filter_column_name: f"Total {filter_column_name}",
+            target_col: target_col if target_col else ""
+        },
         template="plotly_white"
     )
 
-    fig_channel.update_layout(
-        yaxis_tickformat=",.0f",  # Menambahkan koma sebagai pemisah ribuan
-        title_font=dict(color="#1C79F2")  # Mengubah warna font title
+    fig_channel_comparison.update_layout(
+        yaxis_title=None,
+        yaxis_tickformat=",.0f",
+        title_font=dict(size=20, color="#1C79F2"),  # Ukuran font diperbesar
     )
 
-    # Menonaktifkan legenda
-    showlegend=False  # Menonaktifkan legenda
-
-    st.plotly_chart(fig_channel, use_container_width=True)
+    st.plotly_chart(fig_channel_comparison, use_container_width=True)
 
     # ================== Chart 3: By SKU Report ==================
-    filtered_data_sku = df.groupby("SKU REPORT")[filter_column_name].sum().reset_index()
-    filtered_data_sku[filter_column_name] = filtered_data_sku[filter_column_name].astype(int)
+    df_target_sku = pd.merge(
+        df.groupby("SKU REPORT")[filter_column_name].sum().reset_index(),
+        target_sku,
+        on="SKU REPORT",
+        how="left"
+    )
 
-    fig_sku = px.bar(
-        filtered_data_sku,
+        # Kondisi untuk memilih kolom target sesuai filter
+    if filter_column == "by Quantity":
+        target_col = "TARGET SKU QTY"
+        y_columns = [filter_column_name, target_col]
+        title_chart = "Perbandingan Penjualan per SKU (Quantity)"
+    elif filter_column == "by Liter":
+        target_col = "TARGET SKU LITER"
+        y_columns = [filter_column_name, target_col]
+        title_chart = "Perbandingan Penjualan per SKU (Liter)"
+    else:
+        y_columns = [filter_column_name]
+        target_col = None
+        title_chart = "Perbandingan Penjualan per SKU"
+
+    fig_sku_comparison = px.bar(
+        df_target_sku,
         x="SKU REPORT",
-        y=filter_column_name,
-        title="Sales by SKU",
-        color=filter_column_name,
+        y=y_columns,
+        barmode="group",
+        title=title_chart,
         text_auto=True,
-        template="plotly_dark"
+        labels={
+            "SKU REPORT": "SKU",
+            filter_column_name: f"Total {filter_column_name}",
+            target_col: target_col if target_col else ""
+        },
+        template="plotly_white"
     )
 
-    fig_sku.update_layout(
-        yaxis_tickformat=",.0f",  # Menambahkan koma sebagai pemisah ribuan
-        title_font=dict(color="#1C79F2")  # Mengubah warna font title
+    fig_sku_comparison.update_layout(
+        yaxis_title=None,
+        yaxis_tickformat=",.0f",
+        title_font=dict(size=20, color="#1C79F2"),  # Ukuran font diperbesar
     )
 
-    fig_sku.update_traces(textposition="outside")
-
-    # Menonaktifkan legenda
-    showlegend=False  # Menonaktifkan legenda
-
-    st.plotly_chart(fig_sku, use_container_width=True)
-
-    st.markdown("""---""")
+    st.plotly_chart(fig_sku_comparison, use_container_width=True)
 
     # ================== Tabel Top 10 NAMA PELANGGAN ==================
     # Mengelompokkan data untuk mendapatkan total AMOUNT REAL, TOTAL LITER, dan QTY REAL per pelanggan
@@ -210,7 +276,9 @@ try:
     # Mengonversi AMOUNT REAL menjadi integer
     top_10_customers['AMOUNT REAL'] = top_10_customers['AMOUNT REAL'].astype(int)
     # Menambahkan koma sebagai pemisah ribuan untuk AMOUNT REAL
-    top_10_customers['AMOUNT REAL'] = top_10_customers['AMOUNT REAL'].apply(lambda x: f"{x:,}")
+    top_10_customers['AMOUNT REAL'] = top_10_customers['AMOUNT REAL'].apply(lambda x: f"{int(x):,}")  # Mengubah menjadi integer dan format ribuan
+    top_10_customers['TOTAL LITER'] = top_10_customers['TOTAL LITER'].apply(lambda x: f"{int(x):,}")
+    top_10_customers['QTY REAL'] = top_10_customers['QTY REAL'].apply(lambda x: f"{int(x):,}")
 
     # ================== Pie Chart Week by QTY REAL ==================
     filtered_data_week = df.groupby("WEEK")["QTY REAL"].sum().reset_index()
