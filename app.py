@@ -3,6 +3,12 @@ import pandas as pd
 import plotly.express as px
 import os
 
+# Fungsi untuk memeriksa keberadaan file
+def check_file_existence(file_path):
+    if not os.path.exists(file_path):
+        st.error(f"File '{file_path}' tidak ditemukan. Harap pastikan file tersebut tersedia.")
+        st.stop()  # Hentikan eksekusi jika file tidak ditemukan
+
 # 📂 Membaca file Excel
 file_name = "mst_sales.xlsx"
 df = pd.read_excel(file_name, parse_dates=["TANGGAL"])  # Pastikan kolom TANGGAL terbaca sebagai datetime
@@ -25,7 +31,7 @@ with open("assets/style.css") as f:
 
 # 🏷️ Gunakan month_year dalam st.title
 st.markdown(f"""
-    <h1 style="color: #010169; text-align: center;">
+    <h1 style="color: #008B8B; text-align: center;">
         Sales Trend - AQUA Division {month_year}
     </h1>
     """, unsafe_allow_html=True)
@@ -62,19 +68,19 @@ try:
 
     # Menampilkan Total Liter dan Target Liter
     with left_column:
-        st.markdown("<div class='center-text' style='color: #1C79F2'>Total Liter / Target Liter</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #008B8B'>Total Liter / Target Liter</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{total_sales:,.0f} / <span style='color: orange;'>{total_target_liter:,.0f}</span></div>", unsafe_allow_html=True)
     with middle_column:
-        st.markdown("<div class='center-text' style='color: #1C79F2'>Average Sales per Day (Liter)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #008B8B'>Average Sales per Day (Liter)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{formatted_average_sales_by_liter}</div>", unsafe_allow_html=True)
     with right_column:
-        st.markdown("<div class='center-text' style='color: #1C79F2'>Total Active Outlet</div>", unsafe_allow_html=True)
+        st.markdown("<div class='center-text' style='color: #008B8B'>Total Active Outlet</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='center-text'>{ao_customer:,}</div>", unsafe_allow_html=True)
 
     st.markdown("""---""")
 
     # Menambahkan styling pada teks "Filter Total"
-    st.markdown('<div style="font-size:15px; font-weight:bold; color:#A31B17;">Filter Total:</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:15px; font-weight:bold; color:#008B8B;">Filter Total:</div>', unsafe_allow_html=True)
 
     # Dropdown untuk memilih kolom filter yang digunakan pada semua chart
     filter_column = st.selectbox(
@@ -119,12 +125,12 @@ try:
     col1, col2 = st.columns(2)  # Membagi layar menjadi dua kolom
 
     with col1:
-        st.markdown(f"<h3 style='text-align: center; color: #1C79F2'>SPD by Branch {filter_column}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; color: #008B8B'>SPD by Branch {filter_column}</h3>", unsafe_allow_html=True)
         sales_per_day_depo_pivot = sales_per_day_depo_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
         st.dataframe(sales_per_day_depo_pivot, use_container_width=True)
 
     with col2:
-        st.markdown(f"<h3 style='text-align: center; color: #1C79F2'>SPD by SKU {filter_column}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; color: #008B8B'>SPD by SKU {filter_column}</h3>", unsafe_allow_html=True)
         sales_per_day_sku_pivot = sales_per_day_sku_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
         st.dataframe(sales_per_day_sku_pivot, use_container_width=True)
 
@@ -153,6 +159,7 @@ try:
         target_col = None
         title_chart = "Sales by Branch"
 
+            # Membuat grafik Bar Chart untuk Sales by Branch
     fig_depo_comparison = px.bar(
         df_target_branch,
         x="NAMA DEPO",
@@ -168,12 +175,21 @@ try:
         template="plotly_white"
     )
 
-    fig_depo_comparison.update_layout(
-        yaxis_title=None,
-        yaxis_tickformat=",.0f",
-        title_font=dict(size=20, color="#1C79F2"),  # Ukuran font diperbesar
+    # Mengubah warna angka di dalam bar chart menjadi hitam
+    fig_depo_comparison.update_traces(
+        textfont=dict(
+            color='white'          # Warna font angka di dalam bar chart menjadi hitam
+        )
     )
 
+        # Mengubah layout untuk Depo chart
+    fig_depo_comparison.update_layout(
+        yaxis_title=None,                    # Menghilangkan judul sumbu Y
+        yaxis_tickformat=",.0f",             # Format angka sumbu Y
+        title_font=dict(size=20, color="#008B8B"),  # Ukuran font title chart
+    )
+
+    # Menampilkan grafik
     st.plotly_chart(fig_depo_comparison, use_container_width=True)
 
     # ================== Chart 2: By Channel (Bar Chart) ==================
@@ -215,10 +231,19 @@ try:
         template="plotly_white"
     )
 
+        # Mengubah warna angka di dalam bar chart menjadi hitam
+    fig_channel_comparison.update_traces(
+        textfont=dict(
+            size=14,               # Ukuran font
+            color='white'          # Warna font angka di dalam bar chart menjadi hitam
+        )
+    )
+
+    # Mengubah layout untuk Channel chart
     fig_channel_comparison.update_layout(
-        yaxis_title=None,
-        yaxis_tickformat=",.0f",
-        title_font=dict(size=20, color="#1C79F2"),  # Ukuran font diperbesar
+        yaxis_title=None,                    # Menghilangkan judul sumbu Y
+        yaxis_tickformat=",.0f",             # Format angka sumbu Y
+        title_font=dict(size=20, color="#008B8B"),  # Ukuran font title chart
     )
 
     st.plotly_chart(fig_channel_comparison, use_container_width=True)
@@ -260,10 +285,19 @@ try:
         template="plotly_white"
     )
 
+        # Mengubah warna angka di dalam bar chart menjadi hitam
+    fig_sku_comparison.update_traces(
+        textfont=dict(
+            size=14,               # Ukuran font
+            color='white'          # Warna font angka di dalam bar chart menjadi hitam
+        )
+    )
+
+    # Mengubah layout untuk SKU chart
     fig_sku_comparison.update_layout(
-        yaxis_title=None,
-        yaxis_tickformat=",.0f",
-        title_font=dict(size=20, color="#1C79F2"),  # Ukuran font diperbesar
+        yaxis_title=None,                    # Menghilangkan judul sumbu Y
+        yaxis_tickformat=",.0f",             # Format angka sumbu Y
+        title_font=dict(size=20, color="#008B8B"),  # Ukuran font title chart
     )
 
     st.plotly_chart(fig_sku_comparison, use_container_width=True)
@@ -314,7 +348,7 @@ try:
 
     with col1:
         # Menampilkan label dengan penyesuaian jarak
-        st.markdown('<h3 style="color:#1C79F2; margin-bottom: 0;">Top 25 Customer</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="color:#008B8B; margin-bottom: 0;">Top 25 Customer</h3>', unsafe_allow_html=True)
         # ✅ Menampilkan tabel dengan Ranking sebagai index
         renamed_df = top_10_customers.rename(columns={
             'AMOUNT REAL': 'AMOUNT',
@@ -326,7 +360,7 @@ try:
 
     with col2:
         # Menampilkan label dengan penyesuaian jarak
-        st.markdown('<h3 style="color:#1C79F2; margin-bottom: 0;">Sales by Week</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="color:#008B8B; margin-bottom: 0;">Sales by Week</h3>', unsafe_allow_html=True)
         # Menampilkan Pie Chart
         st.plotly_chart(fig_week, use_container_width=True)
 
