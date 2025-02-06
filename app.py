@@ -134,6 +134,44 @@ try:
         sales_per_day_sku_pivot = sales_per_day_sku_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
         st.dataframe(sales_per_day_sku_pivot, use_container_width=True)
 
+    # ================== Breakdown DEPO ==================
+    depo_by_sku = df.groupby(['NAMA DEPO', 'SKU REPORT'])[filter_column_name].sum().reset_index()
+
+    # Memutar data sehingga TANGGAL menjadi kolom
+    depo_by_sku_pivot = depo_by_sku.pivot_table(
+        index='NAMA DEPO',  # Baris berdasarkan Nama Depo
+        columns='SKU REPORT',  # Kolom berdasarkan SKU REPORT
+        values=filter_column_name,  # Nilai yang ditampilkan adalah kolom yang dipilih
+        aggfunc='sum',  # Menjumlahkan nilai jika ada beberapa entri untuk satu depo dan tanggal
+        fill_value=0  # Jika tidak ada data, isi dengan 0
+    )
+
+    # ================== Breakdown DEPO ==================
+    # Mengelompokkan data berdasarkan Depo dan Channel dan menjumlahkan nilai yang dipilih
+    depo_by_ch = df.groupby(['NAMA DEPO', 'CHANNEL'])[filter_column_name].sum().reset_index()
+
+    # Memutar data sehingga TANGGAL menjadi kolom
+    depo_by_ch_pivot = depo_by_ch.pivot_table(
+        index='NAMA DEPO',  # Baris berdasarkan DEPO
+        columns='CHANNEL',  # Kolom berdasarkan CHANNEL
+        values=filter_column_name,  # Nilai yang ditampilkan adalah kolom yang dipilih
+        aggfunc='sum',  # Menjumlahkan nilai jika ada beberapa entri untuk satu SKU dan tanggal
+        fill_value=0  # Jika tidak ada data, isi dengan 0
+    )
+
+    # ================== Menampilkan Tabel Sales per Day ==================
+    col1, col2 = st.columns(2)  # Membagi layar menjadi dua kolom
+
+    with col1:
+        st.markdown(f"<h3 style='text-align: center; color: #008B8B'>Breakdown Depo by SKU {filter_column}</h3>", unsafe_allow_html=True)
+        depo_by_sku_pivot = depo_by_sku_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
+        st.dataframe(depo_by_sku_pivot, use_container_width=True)
+
+    with col2:
+        st.markdown(f"<h3 style='text-align: center; color: #008B8B'>Breakdown Depo by Channel {filter_column}</h3>", unsafe_allow_html=True)
+        depo_by_ch_pivot = depo_by_ch_pivot.applymap(lambda x: f"{int(x):,}" if isinstance(x, (int, float)) else x)
+        st.dataframe(depo_by_ch_pivot, use_container_width=True)
+
     st.markdown("""---""")
 
         # ================== Chart 1: By Depo ==================
